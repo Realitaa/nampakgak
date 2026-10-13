@@ -12,12 +12,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
-import { destroy } from '@/routes/lost-items';
+import type { ItemType } from '@/types';
 
 const props = defineProps<{
     open: boolean;
     reportId: number | null;
     reportTitle: string;
+    /**
+     * Delete endpoint for the report. Passed in so the same dialog serves both
+     * the lost and found listing pages without importing either route set.
+     */
+    destroyUrl: string;
+    /** Labels the copy for the report kind being removed. */
+    type: ItemType;
 }>();
 
 const emit = defineEmits<{
@@ -26,6 +33,8 @@ const emit = defineEmits<{
 
 const processing = ref(false);
 const error = ref<string | null>(null);
+
+const typeLabel = { lost: 'kehilangan', found: 'penemuan' } as const;
 
 watch(
     () => props.open,
@@ -52,11 +61,11 @@ function confirm(): void {
     processing.value = true;
     error.value = null;
 
-    router.delete(destroy.url(props.reportId), {
+    router.delete(props.destroyUrl, {
         preserveScroll: true,
         onSuccess: () => emit('update:open', false),
         onError: () => {
-            error.value = 'Laporan gagal dihapus. Silakan coba lagi.';
+            error.value = `Laporan ${typeLabel[props.type]} gagal dihapus. Silakan coba lagi.`;
         },
         onFinish: () => {
             processing.value = false;

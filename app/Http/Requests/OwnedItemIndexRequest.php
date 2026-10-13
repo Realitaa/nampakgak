@@ -8,7 +8,7 @@ use App\Models\Location;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Http\FormRequest;
 
-class LostItemIndexRequest extends FormRequest
+class OwnedItemIndexRequest extends FormRequest
 {
     /**
      * The route is already behind the auth middleware.

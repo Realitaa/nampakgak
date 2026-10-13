@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Item;
-use App\Policies\LostItemPolicy;
+use App\Policies\ItemPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -27,11 +27,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::policy(Item::class, LostItemPolicy::class);
+        Gate::policy(Item::class, ItemPolicy::class);
 
-        // The route parameter is named for the resource (lost_item) rather than
-        // the model, so the binding is registered explicitly.
+        // The route parameters are named for the resource (lost_item,
+        // found_item) rather than the model, so the bindings are explicit.
         Route::model('lost_item', Item::class);
+        Route::model('found_item', Item::class);
 
         $this->configureDefaults();
     }

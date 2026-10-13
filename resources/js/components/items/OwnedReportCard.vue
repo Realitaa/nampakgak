@@ -18,13 +18,20 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { edit, status as statusRoute } from '@/routes/lost-items';
-import type { ItemStatus, OwnedItemReport, StatusOptions } from '@/types';
-import DeleteLostReportDialog from './DeleteLostReportDialog.vue';
+import type { ItemStatus, ItemType, OwnedItemReport, StatusOptions } from '@/types';
+import DeleteReportDialog from './DeleteReportDialog.vue';
 
 const props = defineProps<{
     report: OwnedItemReport;
     statusOptions: StatusOptions;
+    /**
+     * Route builders for the report kind being listed. Passed in so one card
+     * serves both the lost and found listings without importing either route
+     * set, which also keeps the type/route pairing unambiguous.
+     */
+    editUrl: string;
+    statusUrl: string;
+    destroyUrl: string;
 }>();
 
 const imageFailed = ref(false);
@@ -74,11 +81,7 @@ const formattedDate = computed(() => {
 });
 
 function changeStatus(value: ItemStatus): void {
-    router.patch(
-        statusRoute.url(props.report.id),
-        { status: value },
-        { preserveScroll: true },
-    );
+    router.patch(props.statusUrl, { status: value }, { preserveScroll: true });
 }
 </script>
 
@@ -125,7 +128,7 @@ function changeStatus(value: ItemStatus): void {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem as-child>
-                        <Link :href="edit(report.id)">Ubah laporan</Link>
+                        <Link :href="editUrl">Ubah laporan</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem variant="destructive" @select="deleteOpen = true">
                         Hapus laporan
@@ -156,7 +159,7 @@ function changeStatus(value: ItemStatus): void {
 
             <div class="mt-2 flex items-center gap-2 border-t pt-3">
                 <Link
-                    :href="edit(report.id)"
+                    :href="editUrl"
                     class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-3 py-1.5 text-xs font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                     <Pencil class="size-3.5" aria-hidden="true" />
@@ -173,10 +176,12 @@ function changeStatus(value: ItemStatus): void {
             </div>
         </div>
 
-        <DeleteLostReportDialog
+        <DeleteReportDialog
             v-model:open="deleteOpen"
             :report-id="report.id"
             :report-title="report.title"
+            :destroy-url="destroyUrl"
+            :type="report.type as ItemType"
         />
     </div>
 </template>

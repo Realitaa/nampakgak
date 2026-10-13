@@ -13,14 +13,20 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { index as lostItemsIndex, store, update } from '@/routes/lost-items';
-import type { FilterOption, OwnedItemReport } from '@/types';
+import type { FilterOption, ItemType, OwnedItemReport } from '@/types';
 
 const props = defineProps<{
     mode: 'create' | 'edit';
+    type: ItemType;
     categories: FilterOption[];
     locations: FilterOption[];
     item?: OwnedItemReport;
+    /** Listing URL for the cancel action. */
+    indexUrl: string;
+    /** Create endpoint used in create mode. */
+    storeUrl: string;
+    /** Update endpoint used in edit mode. */
+    updateUrl: string;
 }>();
 
 const form = useForm<{
@@ -51,8 +57,13 @@ const showExistingImage = computed(
     () => existingImageUrl.value !== null && !previewFailed.value,
 );
 
-const heading = computed(() =>
-    props.mode === 'create' ? 'Tambah Laporan Kehilangan' : 'Ubah Laporan Kehilangan',
+// Wording differs only in the two type-specific fields.
+const locationLabel = computed(() =>
+    props.type === 'found' ? 'Lokasi Penemuan' : 'Lokasi Terakhir Dilihat',
+);
+
+const eventDateLabel = computed(() =>
+    props.type === 'found' ? 'Tanggal Penemuan' : 'Tanggal Kehilangan',
 );
 
 const submitLabel = computed(() =>
@@ -98,7 +109,7 @@ function submit(): void {
     }
 
     if (props.mode === 'create') {
-        form.post(store.url(), { forceFormData: true });
+        form.post(props.storeUrl, { forceFormData: true });
 
         return;
     }
@@ -108,7 +119,7 @@ function submit(): void {
     form.transform((data) => ({
         ...data,
         _method: 'put',
-    })).post(update.url(props.item!.id), { forceFormData: true });
+    })).post(props.updateUrl, { forceFormData: true });
 }
 
 onUnmounted(releasePreview);
@@ -163,7 +174,7 @@ onUnmounted(releasePreview);
             </div>
 
             <div class="grid gap-2">
-                <Label for="location">Lokasi Terakhir Dilihat</Label>
+                <Label for="location">{{ locationLabel }}</Label>
                 <Select v-model="form.location_id">
                     <SelectTrigger id="location" class="w-full">
                         <SelectValue placeholder="Pilih lokasi" />
@@ -184,7 +195,7 @@ onUnmounted(releasePreview);
 
         <div class="grid gap-2">
             <Label for="event_date">
-                Tanggal Kehilangan
+                {{ eventDateLabel }}
                 <span class="text-muted-foreground">(opsional)</span>
             </Label>
             <Input
@@ -258,7 +269,7 @@ onUnmounted(releasePreview);
 
         <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" as-child>
-                <Link :href="lostItemsIndex()">Batal</Link>
+                <Link :href="indexUrl">Batal</Link>
             </Button>
             <Button type="submit" :disabled="form.processing">
                 <Loader2

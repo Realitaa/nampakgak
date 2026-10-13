@@ -61,9 +61,9 @@ export type OwnedItemReport = {
 };
 
 /**
- * Active filters for the owner-facing lost-report listing.
+ * Active filters for the owner-facing report listings (both kinds).
  */
-export type LostItemFilters = {
+export type OwnedItemFilters = {
     search: string | null;
     status: ItemStatus | null;
     category: number | null;

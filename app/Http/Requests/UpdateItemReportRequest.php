@@ -7,12 +7,11 @@ use App\Models\Location;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateLostItemRequest extends FormRequest
+class UpdateItemReportRequest extends FormRequest
 {
     /**
-     * Authorization is handled by the LostItemPolicy; the controller resolves
-     * the bound report after this check. This runs before the policy, so it only
-     * guards authentication.
+     * Authorization is handled by the ItemPolicy; the controller resolves
+     * the bound report and authorizes it before calling the service.
      */
     public function authorize(): bool
     {

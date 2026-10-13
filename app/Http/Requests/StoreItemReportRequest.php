@@ -7,10 +7,11 @@ use App\Models\Location;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreLostItemRequest extends FormRequest
+class StoreItemReportRequest extends FormRequest
 {
     /**
-     * Any authenticated user may report their own lost item.
+     * Any authenticated user may report an item they found or lost. The report
+     * type is decided by the controller route, never by the request payload.
      */
     public function authorize(): bool
     {

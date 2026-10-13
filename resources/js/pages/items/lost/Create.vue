@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import ItemForm from '@/components/items/ItemForm.vue';
-import { create as lostItemsCreate, index as lostItemsIndex } from '@/routes/lost-items';
+import { create as lostItemsCreate, index as lostItemsIndex, store as lostItemsStore } from '@/routes/lost-items';
 import type { FilterOption } from '@/types';
 
 defineProps<{
@@ -42,8 +42,12 @@ defineOptions({
         <div class="rounded-xl border bg-card p-4 shadow-xs sm:p-6">
             <ItemForm
                 mode="create"
+                type="lost"
                 :categories="categories"
                 :locations="locations"
+                :index-url="lostItemsIndex.url()"
+                :store-url="lostItemsStore.url()"
+                update-url=""
             />
         </div>
     </div>

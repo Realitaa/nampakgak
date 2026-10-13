@@ -6,10 +6,10 @@ use App\Enums\ItemStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
 
-class UpdateLostItemStatusRequest extends FormRequest
+class UpdateItemStatusRequest extends FormRequest
 {
     /**
-     * Authorization is handled by the LostItemPolicy in the controller.
+     * Authorization is handled by the ItemPolicy in the controller.
      */
     public function authorize(): bool
     {

@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ItemStatus;
-use App\Http\Requests\LostItemIndexRequest;
-use App\Http\Requests\StoreLostItemRequest;
-use App\Http\Requests\UpdateLostItemRequest;
-use App\Http\Requests\UpdateLostItemStatusRequest;
+use App\Enums\ItemType;
+use App\Http\Requests\OwnedItemIndexRequest;
+use App\Http\Requests\StoreItemReportRequest;
+use App\Http\Requests\UpdateItemReportRequest;
+use App\Http\Requests\UpdateItemStatusRequest;
 use App\Models\Item;
 use App\Services\ItemService;
 use Illuminate\Http\RedirectResponse;
@@ -22,12 +23,12 @@ class LostItemController extends Controller
     /**
      * List the authenticated user's own lost reports.
      */
-    public function index(LostItemIndexRequest $request): Response
+    public function index(OwnedItemIndexRequest $request): Response
     {
         $filters = $request->filters();
 
         return Inertia::render('items/lost/Index', [
-            'items' => $this->items->paginateOwnedLostReports($request->user(), $filters),
+            'items' => $this->items->paginateOwnedReports($request->user(), ItemType::Lost, $filters),
             ...$this->items->filterOptions(),
             'filters' => $filters,
             'statusOptions' => ItemStatus::options(),
@@ -47,10 +48,11 @@ class LostItemController extends Controller
     /**
      * Store a new lost report for the authenticated user.
      */
-    public function store(StoreLostItemRequest $request): RedirectResponse
+    public function store(StoreItemReportRequest $request): RedirectResponse
     {
-        $this->items->createLostReport(
+        $this->items->createReport(
             $request->user(),
+            ItemType::Lost,
             $request->reportData(),
             $request->file('image'),
         );
@@ -65,7 +67,7 @@ class LostItemController extends Controller
      */
     public function edit(Request $request, Item $lost_item): Response
     {
-        Gate::authorize('update', $lost_item);
+        Gate::authorize('updateLost', $lost_item);
 
         $lost_item->load(['category:id,name', 'location:id,name']);
 
@@ -88,11 +90,11 @@ class LostItemController extends Controller
     /**
      * Update an owned lost report.
      */
-    public function update(UpdateLostItemRequest $request, Item $lost_item): RedirectResponse
+    public function update(UpdateItemReportRequest $request, Item $lost_item): RedirectResponse
     {
-        Gate::authorize('update', $lost_item);
+        Gate::authorize('updateLost', $lost_item);
 
-        $this->items->updateLostReport(
+        $this->items->updateReport(
             $lost_item,
             $request->reportData(),
             $request->file('image'),
@@ -106,11 +108,11 @@ class LostItemController extends Controller
     /**
      * Change an owned lost report's status.
      */
-    public function updateStatus(UpdateLostItemStatusRequest $request, Item $lost_item): RedirectResponse
+    public function updateStatus(UpdateItemStatusRequest $request, Item $lost_item): RedirectResponse
     {
-        Gate::authorize('updateStatus', $lost_item);
+        Gate::authorize('updateLostStatus', $lost_item);
 
-        $this->items->updateLostReportStatus($lost_item, $request->status());
+        $this->items->updateReportStatus($lost_item, $request->status());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Report status updated.')]);
 
@@ -122,9 +124,9 @@ class LostItemController extends Controller
      */
     public function destroy(Item $lost_item): RedirectResponse
     {
-        Gate::authorize('delete', $lost_item);
+        Gate::authorize('deleteLost', $lost_item);
 
-        $this->items->deleteLostReport($lost_item);
+        $this->items->deleteReport($lost_item);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Lost report deleted.')]);
 
