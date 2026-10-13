@@ -50,6 +50,47 @@ test('email verification status is unchanged when the email address is unchanged
     expect($user->refresh()->email_verified_at)->not->toBeNull();
 });
 
+test('the phone number can be added', function () {
+    $user = User::factory()->create(['phone_number' => null]);
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone_number' => '081234567890',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->phone_number)->toBe('081234567890');
+});
+
+test('the phone number may be left empty', function () {
+    $user = User::factory()->create(['phone_number' => '081234567890']);
+
+    $this->actingAs($user)
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone_number' => '',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($user->refresh()->phone_number)->toBeNull();
+});
+
+test('an invalid phone number is rejected', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->from(route('profile.edit'))
+        ->patch(route('profile.update'), [
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone_number' => 'not-a-number',
+        ])
+        ->assertSessionHasErrors('phone_number');
+});
+
 test('user can delete their account', function () {
     $user = User::factory()->create();
 

@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { BadgeCheck, Clock, Hand, SearchX } from '@lucide/vue';
-import type { DashboardSummary } from '@/components/dashboard/fixtures';
+import type {
+    DashboardOptions,
+    DashboardSummary,
+} from '@/components/dashboard/types';
 
 defineProps<{
     summary: DashboardSummary;
+    labels?: DashboardOptions;
 }>();
 
 const cards: {
@@ -28,7 +32,7 @@ const cards: {
         >
             <div class="flex items-center justify-between gap-2">
                 <span class="text-sm text-muted-foreground">
-                    {{ card.label }}
+                    {{ labels?.[card.key] ?? card.label }}
                 </span>
                 <span
                     class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"

@@ -18,7 +18,21 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'phone_number' => $this->phoneNumberRules(),
         ];
+    }
+
+    /**
+     * Get the validation rules used to validate user phone numbers.
+     *
+     * Optional contact detail, so an empty submission is accepted and stored
+     * as null. The pattern matches Indonesian mobile numbers used on campus.
+     *
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function phoneNumberRules(): array
+    {
+        return ['nullable', 'string', 'max:20', 'regex:/^[0-9+][0-9\-\s]{6,19}$/'];
     }
 
     /**

@@ -13,13 +13,10 @@ import {
     Shirt,
     Wallet,
 } from '@lucide/vue';
-import {
-    CATEGORY_LABELS,
-    REPORT_STATUS_LABELS,
-    REPORT_TYPE_LABELS,
-    formatReportDate,
-    type LandingReport,
-} from '@/components/landing/fixtures';
+import type {
+    DashboardOptions,
+    DashboardReport,
+} from '@/components/dashboard/types';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -36,15 +33,23 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
-import { home } from '@/routes';
+import { index as foundIndex } from '@/routes/found-items';
+import { index as lostIndex } from '@/routes/lost-items';
 import { computed, ref } from 'vue';
 
 defineProps<{
-    reports: LandingReport[];
+    reports: DashboardReport[];
+    statusOptions: DashboardOptions;
 }>();
 
-const selectedReport = ref<LandingReport | null>(null);
+const selectedReport = ref<DashboardReport | null>(null);
 
 const dialogOpen = computed({
     get: () => selectedReport.value !== null,
@@ -55,14 +60,25 @@ const dialogOpen = computed({
     },
 });
 
-const categoryIcons: Record<string, Component> = {
-    documents: IdCard,
-    electronics: Laptop,
-    'wallets-bags': Wallet,
-    keys: KeyRound,
-    clothing: Shirt,
-    other: Package,
-};
+// Category names come from the database, so match on lowercased keywords
+// rather than a fixed slug list; anything unrecognised falls back to Package.
+const categoryIcons: { keywords: string[]; icon: Component }[] = [
+    { keywords: ['document', 'card', 'id'], icon: IdCard },
+    { keywords: ['electronic', 'phone', 'laptop', 'gadget'], icon: Laptop },
+    { keywords: ['wallet', 'bag', 'purse'], icon: Wallet },
+    { keywords: ['key'], icon: KeyRound },
+    { keywords: ['cloth', 'jacket', 'shirt', 'hoodie'], icon: Shirt },
+];
+
+function categoryIcon(name: string): Component {
+    const normalized = name.toLowerCase();
+
+    return (
+        categoryIcons.find(({ keywords }) =>
+            keywords.some((keyword) => normalized.includes(keyword)),
+        )?.icon ?? Package
+    );
+}
 
 const typeBadgeClasses: Record<string, string> = {
     lost: 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/30',
@@ -70,19 +86,32 @@ const typeBadgeClasses: Record<string, string> = {
 };
 
 const statusClasses: Record<string, string> = {
-    searching:
-        'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/30',
-    'awaiting-claim':
+    active: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/30',
+    claimed:
         'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-400/10 dark:text-sky-300 dark:ring-sky-400/30',
-    returned:
+    resolved:
         'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/30',
 };
 
 const statusDotClasses: Record<string, string> = {
-    searching: 'bg-amber-500',
-    'awaiting-claim': 'bg-sky-500',
-    returned: 'bg-emerald-500',
+    active: 'bg-amber-500',
+    claimed: 'bg-sky-500',
+    resolved: 'bg-emerald-500',
 };
+
+const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+});
+
+function formatDate(value: string | null): string {
+    if (!value) {
+        return 'Date not specified';
+    }
+
+    return dateFormatter.format(new Date(`${value}T00:00:00`));
+}
 </script>
 
 <template>
@@ -93,17 +122,26 @@ const statusDotClasses: Record<string, string> = {
                 The latest items you've reported lost or found.
             </CardDescription>
             <CardAction>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    as-child
-                    title="Full report listing arrives with the reports module"
-                >
-                    <Link :href="home()">
-                        View all reports
-                        <ArrowRight aria-hidden="true" />
-                    </Link>
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="sm">
+                            View all reports
+                            <ArrowRight aria-hidden="true" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-44">
+                        <DropdownMenuItem as-child>
+                            <Link class="block w-full cursor-pointer" :href="lostIndex()">
+                                Lost items
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <Link class="block w-full cursor-pointer" :href="foundIndex()">
+                                Found items
+                            </Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </CardAction>
         </CardHeader>
 
@@ -119,7 +157,7 @@ const statusDotClasses: Record<string, string> = {
                             class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
                         >
                             <component
-                                :is="categoryIcons[report.category]"
+                                :is="categoryIcon(report.category.name)"
                                 class="size-4"
                                 aria-hidden="true"
                             />
@@ -133,14 +171,14 @@ const statusDotClasses: Record<string, string> = {
                                     class="rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
                                     :class="typeBadgeClasses[report.type]"
                                 >
-                                    {{ REPORT_TYPE_LABELS[report.type] }}
+                                    {{ report.type === 'lost' ? 'Lost' : 'Found' }}
                                 </span>
                             </div>
                             <p
                                 class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground"
                             >
                                 <span class="truncate">
-                                    {{ CATEGORY_LABELS[report.category] }}
+                                    {{ report.category.name }}
                                 </span>
                                 <span class="flex min-w-0 items-center gap-1">
                                     <MapPin
@@ -148,7 +186,7 @@ const statusDotClasses: Record<string, string> = {
                                         aria-hidden="true"
                                     />
                                     <span class="truncate">
-                                        {{ report.location }}
+                                        {{ report.location.name }}
                                     </span>
                                 </span>
                                 <span class="flex items-center gap-1">
@@ -156,7 +194,7 @@ const statusDotClasses: Record<string, string> = {
                                         class="size-3 shrink-0"
                                         aria-hidden="true"
                                     />
-                                    {{ formatReportDate(report.occurredAt) }}
+                                    {{ formatDate(report.event_date) }}
                                 </span>
                             </p>
                         </div>
@@ -174,7 +212,7 @@ const statusDotClasses: Record<string, string> = {
                                 :class="statusDotClasses[report.status]"
                                 aria-hidden="true"
                             />
-                            {{ REPORT_STATUS_LABELS[report.status] }}
+                            {{ statusOptions[report.status] ?? report.status }}
                         </span>
                         <Button
                             variant="outline"
@@ -220,7 +258,7 @@ const statusDotClasses: Record<string, string> = {
                         class="rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
                         :class="typeBadgeClasses[selectedReport.type]"
                     >
-                        {{ REPORT_TYPE_LABELS[selectedReport.type] }}
+                        {{ selectedReport.type === 'lost' ? 'Lost' : 'Found' }}
                     </span>
                     <span
                         class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
@@ -231,7 +269,10 @@ const statusDotClasses: Record<string, string> = {
                             :class="statusDotClasses[selectedReport.status]"
                             aria-hidden="true"
                         />
-                        {{ REPORT_STATUS_LABELS[selectedReport.status] }}
+                        {{
+                            statusOptions[selectedReport.status] ??
+                            selectedReport.status
+                        }}
                     </span>
                 </div>
                 <DialogTitle class="text-left text-lg leading-snug">
@@ -243,10 +284,6 @@ const statusDotClasses: Record<string, string> = {
             </DialogHeader>
 
             <div v-if="selectedReport" class="space-y-4">
-                <p class="text-sm leading-relaxed text-muted-foreground">
-                    {{ selectedReport.description }}
-                </p>
-
                 <Separator />
 
                 <dl
@@ -256,21 +293,19 @@ const statusDotClasses: Record<string, string> = {
                         <MapPin class="size-4" aria-hidden="true" />
                         <span class="sr-only">Location</span>
                     </dt>
-                    <dd>{{ selectedReport.location }}</dd>
+                    <dd>{{ selectedReport.location.name }}</dd>
 
                     <dt class="flex items-center gap-1.5 text-muted-foreground">
                         <CalendarDays class="size-4" aria-hidden="true" />
                         <span class="sr-only">Date</span>
                     </dt>
-                    <dd>
-                        {{ formatReportDate(selectedReport.occurredAt) }}
-                    </dd>
+                    <dd>{{ formatDate(selectedReport.event_date) }}</dd>
 
                     <dt class="flex items-center gap-1.5 text-muted-foreground">
                         <Package class="size-4" aria-hidden="true" />
                         <span class="sr-only">Category</span>
                     </dt>
-                    <dd>{{ CATEGORY_LABELS[selectedReport.category] }}</dd>
+                    <dd>{{ selectedReport.category.name }}</dd>
                 </dl>
             </div>
         </DialogContent>

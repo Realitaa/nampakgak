@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, PackageSearch, SearchX } from '@lucide/vue';
+import { LayoutGrid, PackageSearch, Search, SearchX } from '@lucide/vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard, home } from '@/routes';
 import { index as foundItemsIndex } from '@/routes/found-items';
+import { index as itemsIndex } from '@/routes/items';
 import { index as lostItemsIndex } from '@/routes/lost-items';
 import type { NavItem } from '@/types';
 
@@ -23,6 +24,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Jelajahi Barang',
+        href: itemsIndex(),
+        icon: Search,
     },
     {
         title: 'Laporan Kehilangan',

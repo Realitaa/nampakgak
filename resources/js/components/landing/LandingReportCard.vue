@@ -1,43 +1,37 @@
 <script setup lang="ts">
-import type { Component } from 'vue';
+import { CalendarDays, MapPin, PackageSearch, PackageCheck, SearchX } from '@lucide/vue';
+import { computed, ref, watch } from 'vue';
 import {
-    CalendarDays,
-    IdCard,
-    KeyRound,
-    Laptop,
-    MapPin,
-    Package,
-    PackageCheck,
-    SearchX,
-    Shirt,
-    Wallet,
-} from '@lucide/vue';
-import {
-    CATEGORY_LABELS,
-    REPORT_STATUS_LABELS,
-    REPORT_TYPE_LABELS,
     formatReportDate,
     type LandingReport,
 } from '@/components/landing/fixtures';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 
-defineProps<{
+const props = defineProps<{
     report: LandingReport;
+    typeOptions: Record<string, string>;
+    statusOptions: Record<string, string>;
 }>();
 
 const emit = defineEmits<{
     (e: 'open', report: LandingReport): void;
 }>();
 
-const categoryIcons: Record<string, Component> = {
-    documents: IdCard,
-    electronics: Laptop,
-    'wallets-bags': Wallet,
-    keys: KeyRound,
-    clothing: Shirt,
-    other: Package,
-};
+const imageFailed = ref(false);
+
+const imageUrl = computed(() =>
+    props.report.image_path ? `/storage/${props.report.image_path}` : null,
+);
+
+const showImage = computed(
+    () => imageUrl.value !== null && !imageFailed.value,
+);
+
+watch(imageUrl, () => {
+    imageFailed.value = false;
+});
 
 const typeBadgeClasses: Record<string, string> = {
     lost: 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/30',
@@ -45,10 +39,20 @@ const typeBadgeClasses: Record<string, string> = {
 };
 
 const statusDotClasses: Record<string, string> = {
-    searching: 'bg-amber-500',
-    'awaiting-claim': 'bg-sky-500',
-    returned: 'bg-emerald-500',
+    active: 'bg-amber-500',
+    claimed: 'bg-sky-500',
+    resolved: 'bg-emerald-500',
 };
+
+const typeLabel = computed(
+    () => props.typeOptions[props.report.type] ?? props.report.type,
+);
+
+const statusLabel = computed(
+    () => props.statusOptions[props.report.status] ?? props.report.status,
+);
+
+const formattedDate = computed(() => formatReportDate(props.report.event_date));
 </script>
 
 <template>
@@ -59,11 +63,22 @@ const statusDotClasses: Record<string, string> = {
         <div
             class="relative flex h-36 items-center justify-center border-b bg-muted/60"
         >
-            <component
-                :is="categoryIcons[report.category]"
-                class="size-10 text-muted-foreground/50"
-                aria-hidden="true"
+            <img
+                v-if="showImage"
+                :src="imageUrl ?? undefined"
+                :alt="report.title"
+                loading="lazy"
+                class="absolute inset-0 h-full w-full object-cover"
+                @error="imageFailed = true"
             />
+            <template v-else>
+                <PackageSearch
+                    class="size-10 text-muted-foreground/50"
+                    aria-hidden="true"
+                />
+                <span class="sr-only">No photo available</span>
+            </template>
+
             <span
                 class="absolute top-3 left-3 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
                 :class="typeBadgeClasses[report.type]"
@@ -73,7 +88,7 @@ const statusDotClasses: Record<string, string> = {
                     class="size-3"
                     aria-hidden="true"
                 />
-                {{ REPORT_TYPE_LABELS[report.type] }}
+                {{ typeLabel }}
             </span>
         </div>
 
@@ -83,35 +98,33 @@ const statusDotClasses: Record<string, string> = {
                     {{ report.title }}
                 </h3>
                 <p class="text-xs text-muted-foreground">
-                    {{ CATEGORY_LABELS[report.category] }}
+                    {{ report.category.name }}
                 </p>
             </div>
 
             <div class="mt-auto space-y-1.5 text-xs text-muted-foreground">
                 <p class="flex items-center gap-1.5">
                     <MapPin class="size-3.5 shrink-0" aria-hidden="true" />
-                    <span class="truncate">{{ report.location }}</span>
+                    <span class="truncate">{{ report.location.name }}</span>
                 </p>
-                <p class="flex items-center gap-1.5">
+                <p v-if="formattedDate" class="flex items-center gap-1.5">
                     <CalendarDays
                         class="size-3.5 shrink-0"
                         aria-hidden="true"
                     />
-                    <span>{{ formatReportDate(report.occurredAt) }}</span>
+                    <span>{{ formattedDate }}</span>
                 </p>
             </div>
 
             <div class="flex items-center justify-between gap-2 border-t pt-3">
-                <span
-                    class="inline-flex items-center gap-1.5 text-xs font-medium text-foreground/80"
-                >
+                <Badge variant="secondary" class="gap-1.5">
                     <span
                         class="size-1.5 rounded-full"
                         :class="statusDotClasses[report.status]"
                         aria-hidden="true"
                     />
-                    {{ REPORT_STATUS_LABELS[report.status] }}
-                </span>
+                    {{ statusLabel }}
+                </Badge>
                 <Button
                     variant="ghost"
                     size="sm"

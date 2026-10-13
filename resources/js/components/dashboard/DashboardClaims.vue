@@ -1,17 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { CalendarDays, EyeOff, Hand, Inbox } from '@lucide/vue';
-import { formatReportDate } from '@/components/landing/fixtures';
-import type { DashboardClaim } from '@/components/dashboard/fixtures';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
+import { CalendarDays, Hand, Inbox, ShieldCheck } from '@lucide/vue';
+import type {
+    DashboardClaim,
+    DashboardOptions,
+} from '@/components/dashboard/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,10 +15,20 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 
 const props = defineProps<{
     claims: DashboardClaim[];
+    claimStatusOptions: DashboardOptions;
 }>();
 
 const selectedClaim = ref<DashboardClaim | null>(null);
@@ -49,20 +52,28 @@ const submittedClaims = computed(() =>
     props.claims.filter((claim) => claim.direction === 'submitted'),
 );
 
-const claimStatusLabels: Record<DashboardClaim['status'], string> = {
-    pending: 'Awaiting review',
-    approved: 'Approved',
-    declined: 'Declined',
-};
-
-const claimStatusClasses: Record<DashboardClaim['status'], string> = {
+const claimStatusClasses: Record<string, string> = {
     pending:
         'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/30',
     approved:
         'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/30',
-    declined:
+    rejected:
         'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/30',
 };
+
+const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+});
+
+function formatDate(value: string): string {
+    if (!value) {
+        return '—';
+    }
+
+    return dateFormatter.format(new Date(`${value}T00:00:00`));
+}
 </script>
 
 <template>
@@ -115,8 +126,7 @@ const claimStatusClasses: Record<DashboardClaim['status'], string> = {
                                         class="size-3 shrink-0"
                                         aria-hidden="true"
                                     />
-                                    Submitted
-                                    {{ formatReportDate(claim.submittedAt) }}
+                                    Submitted {{ formatDate(claim.submittedAt) }}
                                 </span>
                             </p>
                         </div>
@@ -173,15 +183,14 @@ const claimStatusClasses: Record<DashboardClaim['status'], string> = {
                             {{ claim.reportTitle }}
                         </h4>
                         <p class="mt-0.5 text-xs text-muted-foreground">
-                            Submitted
-                            {{ formatReportDate(claim.submittedAt) }}
+                            Submitted {{ formatDate(claim.submittedAt) }}
                         </p>
                     </div>
                     <span
                         class="inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
                         :class="claimStatusClasses[claim.status]"
                     >
-                        {{ claimStatusLabels[claim.status] }}
+                        {{ claimStatusOptions[claim.status] ?? claim.status }}
                     </span>
                 </article>
             </div>
@@ -193,6 +202,15 @@ const claimStatusClasses: Record<DashboardClaim['status'], string> = {
             <DialogHeader v-if="selectedClaim">
                 <div class="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">Claim review</Badge>
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
+                        :class="claimStatusClasses[selectedClaim.status]"
+                    >
+                        {{
+                            claimStatusOptions[selectedClaim.status] ??
+                            selectedClaim.status
+                        }}
+                    </span>
                 </div>
                 <DialogTitle class="text-left text-lg leading-snug">
                     {{ selectedClaim.reportTitle }}
@@ -210,22 +228,50 @@ const claimStatusClasses: Record<DashboardClaim['status'], string> = {
                         <Hand class="size-4" aria-hidden="true" />
                         <span class="sr-only">Claimant</span>
                     </dt>
-                    <dd>{{ selectedClaim.claimant }}</dd>
+                    <dd>{{ selectedClaim.claimant ?? 'You' }}</dd>
 
                     <dt class="flex items-center gap-1.5 text-muted-foreground">
                         <CalendarDays class="size-4" aria-hidden="true" />
                         <span class="sr-only">Submitted</span>
                     </dt>
-                    <dd>{{ formatReportDate(selectedClaim.submittedAt) }}</dd>
+                    <dd>{{ formatDate(selectedClaim.submittedAt) }}</dd>
                 </dl>
+
+                <div class="space-y-1.5">
+                    <h4 class="text-xs font-medium text-muted-foreground">
+                        Ownership evidence
+                    </h4>
+                    <p class="text-sm leading-relaxed">
+                        {{
+                            selectedClaim.proofDescription ??
+                            'No description was provided.'
+                        }}
+                    </p>
+                </div>
+
+                <div
+                    v-if="selectedClaim.rejectionReason"
+                    class="space-y-1.5 rounded-lg border border-red-200 bg-red-50/60 p-3 dark:border-red-400/30 dark:bg-red-400/10"
+                >
+                    <h4 class="text-xs font-medium text-red-700 dark:text-red-300">
+                        Rejection reason
+                    </h4>
+                    <p class="text-sm leading-relaxed text-red-800 dark:text-red-200">
+                        {{ selectedClaim.rejectionReason }}
+                    </p>
+                </div>
 
                 <div
                     class="flex items-start gap-2.5 rounded-lg bg-muted/60 p-3 text-xs leading-relaxed text-muted-foreground"
                 >
-                    <EyeOff class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    <ShieldCheck
+                        class="mt-0.5 size-4 shrink-0"
+                        aria-hidden="true"
+                    />
                     <span>
-                        Ownership evidence stays private — it is only shared
-                        when the full claim review happens.
+                        This evidence is visible only to you as the report
+                        owner. Contact details stay private — reach the claimant
+                        through the app once the claim is approved.
                     </span>
                 </div>
 
@@ -233,8 +279,8 @@ const claimStatusClasses: Record<DashboardClaim['status'], string> = {
                     class="flex items-start gap-2.5 rounded-lg border border-dashed p-3 text-xs leading-relaxed text-muted-foreground"
                 >
                     <span>
-                        Claim review isn't available yet. Approve and decline
-                        actions will appear here once the claims module ships.
+                        Approve and reject actions aren't available yet. They
+                        will appear here once the claim review flow ships.
                     </span>
                 </div>
             </div>

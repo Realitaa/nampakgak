@@ -1,20 +1,27 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import { Plus } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Plus, SearchX, Hand } from '@lucide/vue';
+import { computed } from 'vue';
 import DashboardClaims from '@/components/dashboard/DashboardClaims.vue';
 import DashboardQuickActions from '@/components/dashboard/DashboardQuickActions.vue';
 import DashboardRecentReports from '@/components/dashboard/DashboardRecentReports.vue';
 import DashboardSummaryCards from '@/components/dashboard/DashboardSummaryCards.vue';
-import ReportComingSoonDialog from '@/components/dashboard/ReportComingSoonDialog.vue';
-import {
-    DASHBOARD_CLAIMS,
-    DASHBOARD_REPORTS,
-    MOCK_USER,
-    buildDashboardSummary,
-} from '@/components/dashboard/fixtures';
+import type {
+    DashboardClaim,
+    DashboardOptions,
+    DashboardReport,
+    DashboardSummary,
+} from '@/components/dashboard/types';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { dashboard } from '@/routes';
+import { create as foundCreate } from '@/routes/found-items';
+import { create as lostCreate } from '@/routes/lost-items';
 
 defineOptions({
     layout: {
@@ -27,9 +34,16 @@ defineOptions({
     },
 });
 
-// Mock identity until the profile/report modules are wired up — swap this
-// for the authenticated user's name when real data is available.
-const displayName = MOCK_USER.name;
+defineProps<{
+    summary: DashboardSummary;
+    reports: DashboardReport[];
+    claims: DashboardClaim[];
+    statusOptions: DashboardOptions;
+    claimStatusOptions: DashboardOptions;
+}>();
+
+const page = usePage();
+const displayName = computed(() => page.props.auth.user.name);
 
 const greeting = computed(() => {
     const hour = new Date().getHours();
@@ -44,9 +58,6 @@ const greeting = computed(() => {
 
     return 'Good evening';
 });
-
-const summary = buildDashboardSummary();
-const reportDialogOpen = ref(false);
 </script>
 
 <template>
@@ -69,10 +80,34 @@ const reportDialogOpen = ref(false);
             </div>
 
             <div class="flex items-center gap-2">
-                <Button @click="reportDialogOpen = true">
-                    <Plus aria-hidden="true" />
-                    New report
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                        <Button>
+                            <Plus aria-hidden="true" />
+                            New report
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-48">
+                        <DropdownMenuItem as-child>
+                            <Link
+                                class="flex w-full cursor-pointer items-center gap-2"
+                                :href="lostCreate()"
+                            >
+                                <SearchX class="size-4" aria-hidden="true" />
+                                Lost item
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <Link
+                                class="flex w-full cursor-pointer items-center gap-2"
+                                :href="foundCreate()"
+                            >
+                                <Hand class="size-4" aria-hidden="true" />
+                                Found item
+                            </Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </header>
 
@@ -80,10 +115,14 @@ const reportDialogOpen = ref(false);
 
         <DashboardQuickActions />
 
-        <DashboardRecentReports :reports="DASHBOARD_REPORTS" />
+        <DashboardRecentReports
+            :reports="reports"
+            :status-options="statusOptions"
+        />
 
-        <DashboardClaims :claims="DASHBOARD_CLAIMS" />
+        <DashboardClaims
+            :claims="claims"
+            :claim-status-options="claimStatusOptions"
+        />
     </div>
-
-    <ReportComingSoonDialog v-model:open="reportDialogOpen" />
 </template>

@@ -1,29 +1,40 @@
 <script setup lang="ts">
 import { IdCard, KeyRound, Laptop, Package, Shirt, Wallet } from '@lucide/vue';
 import type { Component } from 'vue';
-import {
-    LANDING_CATEGORIES,
-    type CategoryId,
-} from '@/components/landing/fixtures';
 
 defineProps<{
-    activeCategory: CategoryId | 'all';
+    categories: { id: number; name: string }[];
+    activeCategory: number | 'all';
 }>();
 
 const emit = defineEmits<{
-    (e: 'select', category: CategoryId): void;
+    (e: 'select', category: number): void;
 }>();
 
-const categoryIcons: Record<CategoryId, Component> = {
-    documents: IdCard,
-    electronics: Laptop,
-    'wallets-bags': Wallet,
-    keys: KeyRound,
-    clothing: Shirt,
-    other: Package,
-};
+/**
+ * Icons are matched on lowercased keywords rather than on raw database names,
+ * so categories created by an admin still render even when their name is new.
+ * Anything unrecognised falls back to the generic Package icon.
+ */
+const categoryIconRules: { keywords: string[]; icon: Component }[] = [
+    { keywords: ['document', 'card', 'ktm', 'id'], icon: IdCard },
+    { keywords: ['electronic', 'laptop', 'phone', 'gadget'], icon: Laptop },
+    { keywords: ['wallet', 'bag', 'purse'], icon: Wallet },
+    { keywords: ['key'], icon: KeyRound },
+    { keywords: ['cloth', 'shirt', 'apparel'], icon: Shirt },
+];
 
-function select(category: CategoryId): void {
+function iconFor(name: string): Component {
+    const normalized = name.toLowerCase();
+
+    const match = categoryIconRules.find(({ keywords }) =>
+        keywords.some((keyword) => normalized.includes(keyword)),
+    );
+
+    return match?.icon ?? Package;
+}
+
+function select(category: number): void {
     emit('select', category);
 }
 </script>
@@ -44,7 +55,7 @@ function select(category: CategoryId): void {
 
         <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <button
-                v-for="category in LANDING_CATEGORIES"
+                v-for="category in categories"
                 :key="category.id"
                 type="button"
                 class="flex flex-col items-start gap-3 rounded-xl border bg-card p-4 text-left shadow-xs transition-colors outline-none hover:border-ring/60 hover:bg-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring/50"
@@ -60,13 +71,13 @@ function select(category: CategoryId): void {
                     class="flex size-9 items-center justify-center rounded-lg bg-muted text-foreground"
                 >
                     <component
-                        :is="categoryIcons[category.id]"
+                        :is="iconFor(category.name)"
                         class="size-4.5"
                         aria-hidden="true"
                     />
                 </span>
                 <span class="text-sm leading-snug font-medium">
-                    {{ category.label }}
+                    {{ category.name }}
                 </span>
             </button>
         </div>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Hand, SearchX } from '@lucide/vue';
+import { Compass, Hand, SearchX } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import { dashboard, register } from '@/routes';
+import { index as itemsIndex } from '@/routes/items';
 import type { User } from '@/types';
 
 const props = defineProps<{
@@ -30,6 +31,12 @@ const reportHref = props.user ? dashboard() : register();
             <div
                 class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
             >
+                <Button size="lg" as-child>
+                    <Link :href="itemsIndex()">
+                        <Compass aria-hidden="true" />
+                        Discover all reports
+                    </Link>
+                </Button>
                 <Button variant="outline" size="lg" as-child>
                     <Link :href="reportHref">
                         <SearchX aria-hidden="true" />

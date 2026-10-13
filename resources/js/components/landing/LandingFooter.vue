@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { ScanSearch } from '@lucide/vue';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, home, login, register } from '@/routes';
+import { index as itemsIndex } from '@/routes/items';
 import type { User } from '@/types';
 
 defineProps<{
     user: User | null;
-}>();
-
-const emit = defineEmits<{
-    (e: 'jump', target: 'recent-reports' | 'how-it-works'): void;
+    variant?: 'plain' | 'landing';
 }>();
 
 const year = new Date().getFullYear();
+
+// Keep the landing-specific in-page anchors out of the plain public chrome.
+const sectionLinks = [
+    { href: '#recent-reports', label: 'Browse reports' },
+    { href: '#how-it-works', label: 'How it works' },
+] as const;
 </script>
 
 <template>
@@ -43,23 +47,31 @@ const year = new Date().getFullYear();
             <nav aria-label="Explore">
                 <h3 class="text-sm font-medium">Explore</h3>
                 <ul class="mt-3 space-y-2 text-sm text-muted-foreground">
-                    <li>
-                        <button
-                            type="button"
+                    <template v-if="variant === 'landing'">
+                        <li v-for="link in sectionLinks" :key="link.href">
+                            <a
+                                :href="link.href"
+                                class="transition-colors hover:text-foreground"
+                            >
+                                {{ link.label }}
+                            </a>
+                        </li>
+                    </template>
+                    <li v-else>
+                        <Link
+                            :href="home()"
                             class="transition-colors hover:text-foreground"
-                            @click="emit('jump', 'recent-reports')"
                         >
-                            Browse reports
-                        </button>
+                            Back to home
+                        </Link>
                     </li>
                     <li>
-                        <button
-                            type="button"
+                        <Link
+                            :href="itemsIndex()"
                             class="transition-colors hover:text-foreground"
-                            @click="emit('jump', 'how-it-works')"
                         >
-                            How it works
-                        </button>
+                            Discover all reports
+                        </Link>
                     </li>
                 </ul>
             </nav>

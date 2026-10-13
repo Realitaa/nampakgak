@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { Hand, Search, SearchX } from '@lucide/vue';
+import { Compass, Hand, Search, SearchX } from '@lucide/vue';
 import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { dashboard, register } from '@/routes';
+import { index as itemsIndex } from '@/routes/items';
 import type { User } from '@/types';
 
 const props = defineProps<{
@@ -101,6 +102,12 @@ function searchFor(term: string): void {
         <div
             class="mx-auto mt-6 flex w-full max-w-2xl flex-col items-center justify-center gap-3 sm:flex-row"
         >
+            <Button as-child class="w-full sm:w-auto">
+                <Link :href="itemsIndex()">
+                    <Compass aria-hidden="true" />
+                    Discover all reports
+                </Link>
+            </Button>
             <Button variant="outline" as-child class="w-full sm:w-auto">
                 <Link :href="reportHref">
                     <SearchX aria-hidden="true" />

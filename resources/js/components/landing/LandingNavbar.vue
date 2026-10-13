@@ -11,18 +11,17 @@ import {
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, home, login, register } from '@/routes';
 import type { User } from '@/types';
 
 const props = defineProps<{
     user: User | null;
-}>();
-
-const emit = defineEmits<{
-    (e: 'jump', target: 'recent-reports' | 'how-it-works'): void;
+    variant?: 'plain' | 'landing';
 }>();
 
 const menuOpen = ref(false);
+
+const isLanding = computed(() => props.variant === 'landing');
 
 // Report forms are not implemented yet, so report actions point at the
 // closest existing flow: signing up (or in) to use the app.
@@ -30,10 +29,12 @@ const reportHref = computed(() => (props.user ? dashboard() : register()));
 const reportNote =
     'Reporting needs an account — this opens the sign-up page for now.';
 
-function closeAndJump(target: 'recent-reports' | 'how-it-works'): void {
-    menuOpen.value = false;
-    emit('jump', target);
-}
+// In-page anchors let the shared header link back into the landing sections
+// without threading callbacks through the persistent layout.
+const sectionLinks = [
+    { href: '#recent-reports', label: 'Browse reports' },
+    { href: '#how-it-works', label: 'How it works' },
+] as const;
 </script>
 
 <template>
@@ -44,7 +45,7 @@ function closeAndJump(target: 'recent-reports' | 'how-it-works'): void {
             class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6"
         >
             <Link
-                href="/"
+                :href="home()"
                 class="flex items-center gap-2 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
                 <span
@@ -58,24 +59,18 @@ function closeAndJump(target: 'recent-reports' | 'how-it-works'): void {
             </Link>
 
             <nav
+                v-if="isLanding"
                 class="hidden items-center gap-1 md:flex"
                 aria-label="Main navigation"
             >
                 <Button
+                    v-for="link in sectionLinks"
+                    :key="link.href"
                     variant="ghost"
                     size="sm"
-                    type="button"
-                    @click="emit('jump', 'recent-reports')"
+                    as-child
                 >
-                    Browse reports
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    @click="emit('jump', 'how-it-works')"
-                >
-                    How it works
+                    <a :href="link.href">{{ link.label }}</a>
                 </Button>
                 <Button variant="ghost" size="sm" as-child>
                     <Link :href="reportHref" :title="reportNote">
@@ -141,32 +136,26 @@ function closeAndJump(target: 'recent-reports' | 'how-it-works'): void {
                         </SheetHeader>
 
                         <nav
+                            v-if="isLanding"
                             class="flex flex-col gap-1 px-4 py-2"
                             aria-label="Mobile navigation"
+                            @click="menuOpen = false"
                         >
                             <Button
+                                v-for="link in sectionLinks"
+                                :key="link.href"
                                 variant="ghost"
                                 class="justify-start px-2 py-2"
-                                @click="closeAndJump('recent-reports')"
+                                as-child
                             >
-                                Browse reports
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                class="justify-start px-2 py-2"
-                                @click="closeAndJump('how-it-works')"
-                            >
-                                How it works
+                                <a :href="link.href">{{ link.label }}</a>
                             </Button>
                             <Button
                                 variant="ghost"
                                 class="justify-start gap-1.5 px-2 py-2"
                                 as-child
                             >
-                                <Link
-                                    :href="reportHref"
-                                    @click="menuOpen = false"
-                                >
+                                <Link :href="reportHref">
                                     <Plus
                                         class="size-4 text-muted-foreground"
                                         aria-hidden="true"
@@ -179,10 +168,7 @@ function closeAndJump(target: 'recent-reports' | 'how-it-works'): void {
                                 class="justify-start gap-1.5 px-2 py-2"
                                 as-child
                             >
-                                <Link
-                                    :href="reportHref"
-                                    @click="menuOpen = false"
-                                >
+                                <Link :href="reportHref">
                                     <Plus
                                         class="size-4 text-muted-foreground"
                                         aria-hidden="true"

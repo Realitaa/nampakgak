@@ -5,7 +5,6 @@ import type {
     ReportTypeFilter,
 } from '@/components/landing/fixtures';
 import LandingReportCard from '@/components/landing/LandingReportCard.vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
 defineProps<{
@@ -13,6 +12,8 @@ defineProps<{
     totalCount: number;
     activeType: ReportTypeFilter;
     hasFilters: boolean;
+    typeOptions: Record<string, string>;
+    statusOptions: Record<string, string>;
 }>();
 
 const emit = defineEmits<{
@@ -37,18 +38,9 @@ const typeFilters: { value: ReportTypeFilter; label: string }[] = [
             class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
         >
             <div class="max-w-xl">
-                <div class="flex flex-wrap items-center gap-2">
-                    <h2 class="text-2xl font-semibold tracking-tight">
-                        Recently Reported Items
-                    </h2>
-                    <Badge
-                        variant="outline"
-                        class="text-muted-foreground"
-                        title="The report module is still being built — these sample reports show the intended experience."
-                    >
-                        Sample data
-                    </Badge>
-                </div>
+                <h2 class="text-2xl font-semibold tracking-tight">
+                    Recently Reported Items
+                </h2>
                 <p class="mt-1.5 text-sm text-muted-foreground">
                     Fresh lost and found reports from around campus. Check back
                     often — something spotted today may be yours.
@@ -86,6 +78,8 @@ const typeFilters: { value: ReportTypeFilter; label: string }[] = [
                 v-for="report in reports"
                 :key="report.id"
                 :report="report"
+                :type-options="typeOptions"
+                :status-options="statusOptions"
                 @open="emit('open', $event)"
             />
         </div>

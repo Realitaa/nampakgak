@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import { Hand, Search, SearchX } from '@lucide/vue';
-import { ref } from 'vue';
-import ReportComingSoonDialog from '@/components/dashboard/ReportComingSoonDialog.vue';
 import { Button } from '@/components/ui/button';
-import { home } from '@/routes';
-
-const reportDialogOpen = ref(false);
+import { create as foundCreate } from '@/routes/found-items';
+import { index as itemsIndex } from '@/routes/items';
+import { create as lostCreate } from '@/routes/lost-items';
 </script>
 
 <template>
@@ -18,22 +16,24 @@ const reportDialogOpen = ref(false);
         <div
             class="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
         >
-            <Button variant="outline" @click="reportDialogOpen = true">
-                <SearchX aria-hidden="true" />
-                Report a Lost Item
+            <Button variant="outline" as-child>
+                <Link :href="lostCreate()">
+                    <SearchX aria-hidden="true" />
+                    Report a Lost Item
+                </Link>
             </Button>
-            <Button @click="reportDialogOpen = true">
-                <Hand aria-hidden="true" />
-                Report a Found Item
+            <Button as-child>
+                <Link :href="foundCreate()">
+                    <Hand aria-hidden="true" />
+                    Report a Found Item
+                </Link>
             </Button>
             <Button variant="ghost" as-child class="sm:ml-auto">
-                <Link :href="home()">
+                <Link :href="itemsIndex()">
                     <Search aria-hidden="true" />
                     Browse Reports
                 </Link>
             </Button>
         </div>
-
-        <ReportComingSoonDialog v-model:open="reportDialogOpen" />
     </section>
 </template>

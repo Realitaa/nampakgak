@@ -2,6 +2,7 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
+import PublicLayout from '@/layouts/PublicLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
@@ -11,8 +12,13 @@ void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
+            // The public pages share one chrome: the landing page adds its
+            // in-page navigation, Discover keeps just the shared header/footer.
             case name === 'Welcome':
-            case name.startsWith('items/'):
+                return [PublicLayout, { variant: 'landing' }];
+            case name === 'items/Index':
+                return PublicLayout;
+            case name === 'items/Show':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
