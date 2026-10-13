@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\ItemStatus;
+use App\Http\Requests\LostItemIndexRequest;
+use App\Http\Requests\StoreLostItemRequest;
+use App\Http\Requests\UpdateLostItemRequest;
+use App\Http\Requests\UpdateLostItemStatusRequest;
+use App\Models\Item;
+use App\Services\ItemService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class LostItemController extends Controller
+{
+    public function __construct(private readonly ItemService $items) {}
+
+    /**
+     * List the authenticated user's own lost reports.
+     */
+    public function index(LostItemIndexRequest $request): Response
+    {
+        $filters = $request->filters();
+
+        return Inertia::render('items/lost/Index', [
+            'items' => $this->items->paginateOwnedLostReports($request->user(), $filters),
+            ...$this->items->filterOptions(),
+            'filters' => $filters,
+            'statusOptions' => ItemStatus::options(),
+        ]);
+    }
+
+    /**
+     * Show the create form.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('items/lost/Create', [
+            ...$this->items->filterOptions(),
+        ]);
+    }
+
+    /**
+     * Store a new lost report for the authenticated user.
+     */
+    public function store(StoreLostItemRequest $request): RedirectResponse
+    {
+        $this->items->createLostReport(
+            $request->user(),
+            $request->reportData(),
+            $request->file('image'),
+        );
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Lost report created.')]);
+
+        return to_route('lost-items.index');
+    }
+
+    /**
+     * Show the edit form for an owned lost report.
+     */
+    public function edit(Request $request, Item $lost_item): Response
+    {
+        Gate::authorize('update', $lost_item);
+
+        $lost_item->load(['category:id,name', 'location:id,name']);
+
+        return Inertia::render('items/lost/Edit', [
+            'item' => [
+                'id' => $lost_item->id,
+                'title' => $lost_item->title,
+                'description' => $lost_item->description,
+                'category_id' => $lost_item->category_id,
+                'location_id' => $lost_item->location_id,
+                'event_date' => $lost_item->event_date?->toDateString(),
+                'image_path' => $lost_item->image_path,
+                'status' => $lost_item->status->value,
+                'type' => $lost_item->type->value,
+            ],
+            ...$this->items->filterOptions(),
+        ]);
+    }
+
+    /**
+     * Update an owned lost report.
+     */
+    public function update(UpdateLostItemRequest $request, Item $lost_item): RedirectResponse
+    {
+        Gate::authorize('update', $lost_item);
+
+        $this->items->updateLostReport(
+            $lost_item,
+            $request->reportData(),
+            $request->file('image'),
+        );
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Lost report updated.')]);
+
+        return to_route('lost-items.index');
+    }
+
+    /**
+     * Change an owned lost report's status.
+     */
+    public function updateStatus(UpdateLostItemStatusRequest $request, Item $lost_item): RedirectResponse
+    {
+        Gate::authorize('updateStatus', $lost_item);
+
+        $this->items->updateLostReportStatus($lost_item, $request->status());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Report status updated.')]);
+
+        return back();
+    }
+
+    /**
+     * Permanently delete an owned lost report.
+     */
+    public function destroy(Item $lost_item): RedirectResponse
+    {
+        Gate::authorize('delete', $lost_item);
+
+        $this->items->deleteLostReport($lost_item);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Lost report deleted.')]);
+
+        return to_route('lost-items.index');
+    }
+}

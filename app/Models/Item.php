@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  * @property string $description
  * @property string|null $image_path
  * @property ItemStatus $status
- * @property Carbon $event_date
+ * @property Carbon|null $event_date
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read User $user

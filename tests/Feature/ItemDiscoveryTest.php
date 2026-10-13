@@ -27,7 +27,7 @@ test('the listing is accessible without authentication', function () {
     $this->get(route('items.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Items/Index')
+            ->component('items/Index')
             ->has('items.data', 3)
         );
 });
@@ -38,7 +38,7 @@ test('the listing returns real database records with their relations', function 
     $this->get(route('items.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('Items/Index')
+            ->component('items/Index')
             ->has('items.data', 1)
             ->where('items.data.0.id', $item->id)
             ->where('items.data.0.title', 'Blue Canvas Backpack')
@@ -248,4 +248,15 @@ test('an empty result set renders the page without error', function () {
     $this->get(route('items.index', ['search' => 'nothing-matches-this']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->has('items.data', 0));
+});
+
+test('a report without an incident date is returned as null', function () {
+    Item::factory()->recycle([$this->category, $this->location])->create(['event_date' => null]);
+
+    $this->get(route('items.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('items.data', 1)
+            ->where('items.data.0.event_date', null)
+        );
 });

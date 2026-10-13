@@ -1,4 +1,4 @@
 export * from './auth';
-export * from './item';
+export * from './items';
 export * from './navigation';
 export * from './ui';
