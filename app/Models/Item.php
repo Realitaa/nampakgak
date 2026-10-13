@@ -7,6 +7,7 @@ use App\Enums\ItemType;
 use Database\Factories\ItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -29,6 +30,8 @@ use Illuminate\Support\Carbon;
  * @property-read User $user
  * @property-read Category $category
  * @property-read Location $location
+ * @property-read Collection<int, Claim> $claims
+ * @property-read Collection<int, FoundNotification> $foundNotifications
  */
 #[Fillable(['user_id', 'category_id', 'location_id', 'title', 'type', 'description', 'image_path', 'status', 'event_date'])]
 class Item extends Model
@@ -80,6 +83,16 @@ class Item extends Model
     public function claims(): HasMany
     {
         return $this->hasMany(Claim::class);
+    }
+
+    /**
+     * Sightings reported against this lost report by other users.
+     *
+     * @return HasMany<FoundNotification, $this>
+     */
+    public function foundNotifications(): HasMany
+    {
+        return $this->hasMany(FoundNotification::class);
     }
 
     /**

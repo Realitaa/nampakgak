@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import OwnedReportsIndex from '@/components/items/OwnedReportsIndex.vue';
+import { show } from '@/routes/items';
 import {
     create as foundItemsCreate,
     destroy as foundItemsDestroy,
@@ -59,5 +60,6 @@ defineOptions({
         :edit-url-for="(id) => foundItemsEdit.url(id)"
         :status-url-for="(id) => foundItemsStatus.url(id)"
         :destroy-url-for="(id) => foundItemsDestroy.url(id)"
+        :view-url-for="(id) => show.url(id)"
     />
 </template>

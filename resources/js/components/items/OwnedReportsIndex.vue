@@ -51,6 +51,7 @@ const props = defineProps<{
     editUrlFor: (id: number) => string;
     statusUrlFor: (id: number) => string;
     destroyUrlFor: (id: number) => string;
+    viewUrlFor: (id: number) => string;
 }>();
 
 // Copy that differs between the two report kinds.
@@ -382,6 +383,7 @@ const showingLabel = computed(() => {
                     :edit-url="editUrlFor(report.id)"
                     :status-url="statusUrlFor(report.id)"
                     :destroy-url="destroyUrlFor(report.id)"
+                    :view-url="viewUrlFor(report.id)"
                 />
             </div>
         </div>

@@ -24,9 +24,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { dashboard, login, register } from '@/routes';
-// Future item-detail route: pass each card's href once `items.show` exists.
-// Cards stay link-ready until then (see ItemCard).
-import { index as itemsIndex } from '@/routes/items';
+import { index as itemsIndex, show } from '@/routes/items';
 import type {
     FilterOption,
     ItemFilters,
@@ -478,6 +476,7 @@ const typeFilterOptions = [
                         v-for="report in items.data"
                         :key="report.id"
                         :report="report"
+                        :href="show(report.id).url"
                     />
                 </div>
 

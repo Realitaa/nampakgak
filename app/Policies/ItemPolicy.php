@@ -23,6 +23,14 @@ class ItemPolicy
         return $this->ownsReportOfType($user, $item, ItemType::Lost);
     }
 
+    /**
+     * Any visitor, signed in or not, may open a public report detail page.
+     */
+    public function view(?User $user, Item $item): bool
+    {
+        return true;
+    }
+
     public function updateLost(User $user, Item $item): bool
     {
         return $this->ownsReportOfType($user, $item, ItemType::Lost);

@@ -32,6 +32,8 @@ const props = defineProps<{
     editUrl: string;
     statusUrl: string;
     destroyUrl: string;
+    /** Shared detail page for this report. */
+    viewUrl: string;
 }>();
 
 const imageFailed = ref(false);
@@ -139,7 +141,9 @@ function changeStatus(value: ItemStatus): void {
 
         <div class="flex flex-1 flex-col gap-2 p-4">
             <h3 class="line-clamp-2 leading-snug font-medium">
-                {{ report.title }}
+                <Link :href="viewUrl" class="outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                    {{ report.title }}
+                </Link>
             </h3>
 
             <div class="mt-auto space-y-1.5 text-xs text-muted-foreground">

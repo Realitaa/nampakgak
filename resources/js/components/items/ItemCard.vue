@@ -13,8 +13,8 @@ import type { ItemReport } from '@/types';
 const props = defineProps<{
     report: ItemReport;
     /**
-     * Destination for the future item-detail route. Until that route exists
-     * the card renders as a plain div without a misleading click affordance.
+     * Destination for the shared report detail page. Rendered as a link so the
+     * whole card navigates; omit it only for non-navigable previews.
      */
     href?: string;
 }>();

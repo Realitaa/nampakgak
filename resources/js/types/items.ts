@@ -61,6 +61,70 @@ export type OwnedItemReport = {
 };
 
 /**
+ * Public report data on the shared detail page. Contains no owner identity and
+ * no contact details; those are owner-only props.
+ */
+export type ItemDetail = {
+    id: number;
+    title: string;
+    type: ItemType;
+    description: string;
+    image_path: string | null;
+    status: ItemStatus;
+    event_date: string | null;
+    created_at: string | null;
+    category: ItemCategory;
+    location: ItemLocation;
+};
+
+/**
+ * Server-computed action flags for the detail page. The backend is the
+ * authority; Vue only renders what these allow.
+ */
+export type ItemDetailPermissions = {
+    isOwner: boolean;
+    canManage: boolean;
+    canReportFound: boolean;
+    canClaim: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+};
+
+/**
+ * Contact details shown only to the report owner, and only for the workflow
+ * that needs them (returning the item / reviewing a sighting).
+ */
+export type OwnerContact = {
+    name: string;
+    email: string;
+    phone_number: string | null;
+};
+
+export type OwnerClaim = {
+    id: number;
+    proof_description: string;
+    proof_image: string | null;
+    status: string;
+    rejection_reason: string | null;
+    created_at: string | null;
+    claimant: OwnerContact;
+};
+
+export type OwnerFoundNotification = {
+    id: number;
+    note: string;
+    image_path: string | null;
+    created_at: string | null;
+    reporter: OwnerContact;
+};
+
+export type OwnerLinks = {
+    edit: string;
+    delete: string;
+    index: string;
+};
+
+/**
  * Active filters for the owner-facing report listings (both kinds).
  */
 export type OwnedItemFilters = {

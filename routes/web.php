@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\FoundItemController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ItemDetailController;
 use App\Http\Controllers\LostItemController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
 
 Route::get('items', [ItemController::class, 'index'])->name('items.index');
+Route::get('items/{item}', [ItemDetailController::class, 'show'])->name('items.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'DashboardUser')->name('dashboard');
@@ -27,6 +29,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('found-items/{found_item}', [FoundItemController::class, 'update'])->name('found-items.update');
     Route::patch('found-items/{found_item}/status', [FoundItemController::class, 'updateStatus'])->name('found-items.status');
     Route::delete('found-items/{found_item}', [FoundItemController::class, 'destroy'])->name('found-items.destroy');
+
+    // Contextual actions available from a report's detail page.
+    Route::post('items/{item}/found-notifications', [ItemDetailController::class, 'storeFoundNotification'])
+        ->name('items.found-notifications.store');
+    Route::post('items/{item}/claims', [ItemDetailController::class, 'storeClaim'])
+        ->name('items.claims.store');
 });
 
 require __DIR__.'/settings.php';
