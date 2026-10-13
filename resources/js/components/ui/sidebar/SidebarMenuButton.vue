@@ -29,7 +29,7 @@ const delegatedProps = reactiveOmit(props, "tooltip")
   </SidebarMenuButtonChild>
 
   <Tooltip v-else>
-    <TooltipTrigger as-child>
+    <TooltipTrigger as-child class="group-data-[collapsible=icon]:pl-2!">
       <SidebarMenuButtonChild v-bind="{ ...delegatedProps, ...$attrs }">
         <slot />
       </SidebarMenuButtonChild>
